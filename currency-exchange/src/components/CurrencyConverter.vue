@@ -5,8 +5,8 @@
         class="select"
         name="first-currency"
         id="first-currency"
-        v-model="currency_one"
         @change="fetchData"
+        v-model="currency_one"
       >
         <option v-for="currency in currencies" :value="currency" :key="currency">
           {{ currency }}
@@ -46,56 +46,61 @@
   </div>
 </template>
 
-<script>
-export default {
+<script lang="ts">
+import { defineComponent } from 'vue';
+
+interface CurrencyData {
+  time_last_update_utc: string;
+  conversion_rates: Record<string, number>;
+}
+
+export default defineComponent({
   name: 'CurrencyConverter',
   data() {
     return {
-      data: [],
-      currencies: [],
+      data: {
+        time_last_update_utc: '',
+        conversion_rates: {},
+      } as CurrencyData,
+      currencies: [] as string[],
       currency_one: 'USD',
       currency_two: 'EUR',
       rate: '',
       amountOne: 1,
-      amountTwo: 0
-    }
+      amountTwo: 0,
+    };
   },
-
   methods: {
-    fetchData() {
-      fetch(
-        `https://v6.exchangerate-api.com/v6/c015d7d218dec9a707311ef3/latest/${this.currency_one}`
-      )
+    fetchData(): void {
+      fetch(`https://v6.exchangerate-api.com/v6/c015d7d218dec9a707311ef3/latest/${this.currency_one}`)
         .then((res) => res.json())
-        .then((data) => {
-          this.data = data
-          this.rate = data.conversion_rates[this.currency_two]
-          this.amountTwo = (this.amountOne * this.rate).toFixed(2)
-        })
+        .then((data: CurrencyData) => {
+          this.data = data;
+          this.rate = data.conversion_rates[this.currency_two].toString();
+          this.amountTwo = Number((this.amountOne * parseFloat(this.rate)).toFixed(2));
+        });
     },
-
-    switchValues() {
-      const tempValue = this.currency_one
-      this.currency_one = this.currency_two
-      this.currency_two = tempValue
-      this.fetchData()
-    }
+    switchValues(): void {
+      const tempValue = this.currency_one;
+      this.currency_one = this.currency_two;
+      this.currency_two = tempValue;
+      this.fetchData();
+    },
   },
-
   mounted() {
     fetch('https://v6.exchangerate-api.com/v6/c015d7d218dec9a707311ef3/latest/USD')
       .then((res) => res.json())
-      .then((data) => {
-        this.data = data
-        this.currencies = Object.keys(data.conversion_rates)
-      })
+      .then((data: CurrencyData) => {
+        this.data = data;
+        this.currencies = Object.keys(data.conversion_rates);
+      });
 
-    this.fetchData()
-  }
-}
+    this.fetchData();
+  },
+});
 </script>
 
-<style>
+<style scoped>
 .container {
   width: 100%;
   height: 100%;
@@ -135,7 +140,6 @@ export default {
   background-color: rgb(73, 102, 195);
   color: rgb(232, 234, 239);
   border-radius: 7px;
-
 }
 
 .select {
@@ -159,7 +163,6 @@ input {
   background-color: rgb(155, 155, 155);
   color: rgb(42, 42, 42);
 }
-
 
 #lastUpdated {
   font-size: 18px;
